@@ -15,14 +15,30 @@ console.log("Bombe: " + bombs);
 
 // </1-fold END --- 16-BOMBS
 
-// <1-fold START --- FLOWERS GENERATOR (with prompt)
-n = askNumber();
-console.log("Numero utente: " + n);
+// <1-fold START --- GAME ALGORITHM
 
+// GAME ALGORITHM
+do {
+    n = askNumber(); // ask a number to the user
 
+    // if (cond) PUSH INTO FLOWERS
+    if (!gameOver(n, bombs) && !isFlower(n, flowers)) {
+        // its not a bomb and its not a flower
+        flowers.push(n);
+    }
+} while (!gameOver(n, bombs) && !userWin(bombs, flowers));
 
+console.log("Fiori: " + flowers);
 
-// </1-fold END --- FLOWERS GENERATOR
+// FINAL OUTPUT
+if (gameOver(n, bombs)) {
+    console.log("Hai perso!");
+    console.log("Hai totalizzato: " + flowers.length + " punti");
+} else {
+    console.log("Hai vinto!");
+}
+
+// </1-fold END --- GAME ALGORITHM
 
 // <1-fold START --- ALL FUNCTION
 // generate 16 numbers from 1 to 100
@@ -47,9 +63,29 @@ function get16Bombs(min, max) {
 function askNumber() {
     var userNumber;
     do {
-        userNumber = prompt("Inserisci un numero da 1 a 100")
+        userNumber = parseInt(prompt("Inserisci un numero da 1 a 100"));
     } while (isNaN(userNumber) || userNumber < 1 || userNumber > 100);
     return userNumber;
+}
+
+
+// verify if number is includes into the array --> function for FLOWERS (already chosen)
+function isFlower(number, array) {
+    return array.includes(number);
+}
+
+// return "true" if user loose --> users choose a bomb
+function gameOver(number, array) {
+    return array.includes(number);
+}
+
+// return "true" if user-win: numbers of flower + number of bombs is 100
+function userWin(array1, array2) {
+    var sentinel = false; // default value
+    if (array1.length + array2.length == 100) {
+        sentinel = true;
+    }
+    return sentinel;
 }
 
 // </1-fold END --- ALL FUNCTION
