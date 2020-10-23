@@ -6,45 +6,38 @@
 var level;
 
 // FIELD
-var fieldDimension; // level 0 ==> 100 to level 2 ==> 50
 var field = []; // all possible user-choise
 
 // BOMBS
-var bombs = []; // 16-bombs from 1 to fieldDimension
+var numberOfBombs = 16;
+var bombs = []; // numberOfBombs-bombs from 1 to field length
 
 // POINT
-var userN; // user-number
 var points = []; // all the no-bombs user choise
-var possibleChoise = []; // array difference: field[] - points[] --> are the user-remain-choise
+
+// USER-WIN?
+var winTheGame; // "true" if user win
 
 // #/2-fold END --- VAR ASSIGNMENT
 
 // #2-fold START --- LEVEL
+// level from 0 (easy) to 2 (hard)
 level = askNumber(0, 2, "Inserisci il livello da 0 (facile) a 2 (difficile)");
 // #/2-fold END --- LEVEL
 
 // #2-fold START --- FIELD
-// FIELD-DIMENSION: from level 0 (fieldDimension --> 100) to level 2 (fieldDimension --> 50)
-if (level == 0) {
-    fieldDimension = 100;
-} else if (level == 1) {
-    fieldDimension = 80;
-} else {
-    fieldDimension = 50;
-}
-
 // FIELD-GENERATOR: create all field-single-unit
-field = generateField(fieldDimension);
+field = generateField(level);
 
 // stamp
-console.log("Livello: " + level + ", campo composto da: " + fieldDimension + " unità");
+console.log("Livello: " + level + ", campo composto da: " + field.length + " unità");
 console.log("Field: " + field);
 
 // #/2-fold END --- FIELD
 
 // #2-fold START --- RANDOM-BOMBS
-// BOMBS-GENERATOR: generate 16 bombs from 1 to max (fieldDimension)
-bombs = getBombs(16, fieldDimension);
+// BOMBS-GENERATOR: generate 16 bombs from 1 to max (field length)
+bombs = getBombs(numberOfBombs, field.length);
 
 // stamp
 console.log("Bombe: " + bombs);
@@ -52,33 +45,24 @@ console.log("Bombe: " + bombs);
 // #/2-fold END --- RANDOM-BOMBS
 
 // #2-fold START --- GAME!!!
-// GAME CYCLE: ask a number and verify
-do {
-    // calculate remaining-choise
-    possibleChoise = field.filter(x => !points.includes(x));
-    // stamp
-    console.log("Giocate disponibili: " + possibleChoise);
+// LET'S PLAY
+points = game(field, bombs);
 
-    // ask a number
-    userN = askNumber(1, fieldDimension, "Inserisci un numero che compare fra le tue giocate disponibili!");
+// #/2-fold END --- GAME!!!
 
-    // check and push (eventually)
-    if (!gameOver(userN, bombs) && !isAlreadyTaken(userN, points)) {
-        points.push(userN);
-    }
+// #2-fold START --- STAMP AFTER GAME
+winTheGame = userWin(bombs, points, field);
 
-    // if it's not game over and user does not win --> cycle again
-} while (!gameOver(userN, bombs) && !userWin(bombs, points, fieldDimension));
-
-// END GAME --> STAMP
-if (userWin(bombs, points, fieldDimension)) {
+// STAMP
+if (winTheGame) {
     console.log("Congratulazioni, hai vinto!");
 } else {
     console.log("Hai perso, punti fatti: " + points.length);
 }
 
+// #/2-fold END --- STAMP AFTER GAME
 
-// #/2-fold END --- GAME!!!
+
 
 // </1-fold END --- MINEFIELD
 
@@ -94,49 +78,92 @@ function askNumber(min, max, testo) {
 }
 
 // GENERATE THE FIELD: return an array from 1 to max
-function generateField(max) { // max is a number
-    var array = [];
-    for (var i = 1; i <= max; i++) {
-        array.push(i);
+function generateField(level) { // max is a number
+    var level; // number that rapresent the level
+    var fieldDimension; // the maximum value of the field
+    var field = [];
+
+    // FIELD-DIMENSION: depending of the level
+    switch (level) {
+        case 0: // level easy
+            fieldDimension = 100;
+            break;
+        case 1:
+            fieldDimension = 80;
+            break;
+        case 2: // level hard
+            fieldDimension = 50;
+            break;
     }
-    return array;
+
+    // generate number from 1 to field-dimension
+    for (var i = 1; i <= fieldDimension; i++) {
+        field.push(i);
+    }
+    return field;
 }
 
 // GENERATE BOMBS: generate n numbers from 1 to max
 function getBombs(n, max) {
-    var number; // number from 1 to max
-    var numbers = []; // random-numbers
+    var bomb; // number from 1 to max
+    var bombs = []; // random-numbers
 
     do {
         // GENERATE RANDOM NUMBER FROM 1 TO MAX
-        number = Math.floor(Math.random() * max) + 1;
+        bomb = Math.floor(Math.random() * max) + 1;
 
         // if it's not includes --> push in numbers
-        if (!numbers.includes(number)) {
-            numbers.push(number);
+        if (!bombs.includes(bomb)) {
+            bombs.push(bomb);
         }
-    } while (numbers.length < n);
-    numbers = numbers.sort(function(a, b){return a-b});
-    return numbers;
+    } while (bombs.length < n);
+    bombs = bombs.sort(function(a, b){return a-b});
+    return bombs;
 }
 
-// return "true" if user loose --> users choose a bomb
-function gameOver(number, array) {
-    return array.includes(number);
+// PLAY FUNCTION: return the array of the user-numbers (not the bomb)
+function game(fieldArray, bombsArray) {
+    var userNumber; // user-number --> ask to user
+    var userNumbers = []; // push all userN in
+    var possibleChoise = []; // array with all possible choise for each iteration
+
+    // var-sentinel
+    var gameOver; // return "true" if user-number is a bomb
+    var isAlreadyTaken; // return "true" if user-number is already taken
+    var userWinSentinel = false;
+
+    do {
+        // calculate remaining-choise
+        possibleChoise = field.filter(x => !userNumbers.includes(x));
+        // stamp
+        console.log("Giocate disponibili: " + possibleChoise);
+
+        // ask a number --> user-i-number
+        userNumber = askNumber(1, fieldArray.length, "Inserisci un numero che compare fra le tue giocate disponibili!");
+
+        // define the var-sentinel
+        gameOver = bombsArray.includes(userNumber);
+        isAlreadyTaken = userNumbers.includes(userNumber);
+
+        // check and push (eventually)
+        if (!gameOver && !isAlreadyTaken) {
+            userNumbers.push(userNumber);
+        }
+
+        userWinSentinel = userWin(userNumbers, bombsArray, fieldArray);
+
+        // if it's not game over and user does not win --> cycle again
+    } while (!gameOver && !userWinSentinel);
+
+    return userNumbers;
 }
 
-// return "true" if user choose a taken-number
-function isAlreadyTaken(number, array) {
-    return array.includes(number);
-}
-
-// return "true" if user-win: numbers of point + number of bombs is fieldDimension
-function userWin(array1, array2, max) {
-    var sentinel = false; // default value
-    if (array1.length + array2.length == max) {
-        sentinel = true;
+// USER WIN?? return "true" if points + bombs = field.length
+function userWin(pointsArray, bombsArray, fieldArray) {
+    var userWinControl = false;
+    if (pointsArray.length + bombsArray.length == fieldArray.length) {
+        userWinControl = true;
     }
-    return sentinel;
+    return userWinControl;
 }
-
 // </1-fold END --- ALL FUNCTION
